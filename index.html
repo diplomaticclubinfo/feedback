@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<title>Share Your Feedback</title>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<style>
+:root{
+  --ink:#1c1a17;--ink-soft:#5a544c;--paper:#fbfaf7;--card:#ffffff;--line:#e6e1d8;
+  --gold:#a9852f;--gold-dark:#8a6c24;--gold-tint:#f6efdd;
+  --green:#2f6d4f;--green-tint:#e9f3ee;--red:#a4372c;--red-tint:#fbeae8;
+  --amber:#a8760f;--amber-tint:#faf1de;--shadow:0 4px 18px rgba(28,26,23,.06);--shadow-lg:0 12px 40px rgba(28,26,23,.14);
+  --font:"Georgia","Iowan Old Style",serif;
+  --font-ui:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+html,body{margin:0;padding:0;overflow-x:hidden}
+body{font-family:var(--font-ui);background:var(--paper);color:var(--ink);-webkit-font-smoothing:antialiased;
+  padding-bottom:calc(24px + env(safe-area-inset-bottom,0px));line-height:1.5;font-size:16px}
+h1,h2,.serif{font-family:var(--font)}
+button{font-family:inherit;-webkit-appearance:none}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:1px solid transparent;border-radius:12px;
+  padding:14px 20px;font-size:16px;font-weight:600;cursor:pointer;transition:.15s ease;background:var(--ink);color:#fff;
+  min-height:50px;touch-action:manipulation}
+.btn:hover{opacity:.92}
+.btn:active{transform:scale(.98)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn.btn-gold{background:var(--gold);color:#fff}
+.btn.btn-outline{background:transparent;border-color:var(--line);color:var(--ink)}
+/* font-size:16px on inputs stops iOS Safari from auto-zooming in on focus */
+input,select,textarea{width:100%;padding:13px 14px;border:1.5px solid var(--line);border-radius:12px;font-size:16px;
+  font-family:var(--font-ui);background:#fff;color:var(--ink);min-height:48px}
+textarea{min-height:100px;resize:vertical;line-height:1.5}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--gold);outline-offset:1px}
+input::placeholder,textarea::placeholder{color:#a39c8f}
+label{font-size:14px;font-weight:600;color:var(--ink-soft);display:block;margin-bottom:7px;line-height:1.35}
+.hint{font-size:12.5px;color:var(--ink-soft);margin-top:6px;line-height:1.4}
+.toast-wrap{position:fixed;top:calc(14px + env(safe-area-inset-top,0px));right:14px;left:14px;z-index:9999;
+  display:flex;flex-direction:column;gap:10px;align-items:stretch}
+.toast{background:var(--ink);color:#fff;padding:13px 16px;border-radius:12px;box-shadow:var(--shadow-lg);font-size:14.5px;
+  max-width:420px;margin:0 auto;width:100%;text-align:center;line-height:1.4}
+.toast.error{background:var(--red)}
+.toast.success{background:var(--green)}
+.spinner{width:18px;height:18px;border-radius:50%;border:2.5px solid rgba(255,255,255,.4);border-top-color:#fff;animation:spin .7s linear infinite;display:inline-block}
+@keyframes spin{to{transform:rotate(360deg)}}
+.field{margin-bottom:20px}
+.required:after{content:" *";color:var(--red)}
+.hero{background:linear-gradient(135deg,var(--ink) 0%,#332c22 100%);color:#fff;
+  padding:calc(32px + env(safe-area-inset-top,0px)) 20px 30px;text-align:center}
+.hero .org{font-size:12.5px;letter-spacing:.14em;text-transform:uppercase;opacity:.8;margin-bottom:12px}
+.hero h1{font-size:clamp(20px,5.5vw,24px);margin:0 0 10px;font-weight:600;line-height:1.3}
+.hero p{margin:0;opacity:.88;font-size:15px;line-height:1.55;max-width:340px;margin:0 auto}
+.wrap{max-width:640px;margin:0 auto;padding:0 16px}
+.step-card{background:var(--card);border-radius:16px;box-shadow:var(--shadow);padding:20px 16px;margin:14px 0}
+.choice-row{display:flex;gap:10px;flex-wrap:wrap}
+.choice{flex:1;min-width:110px;min-height:52px;border:1.5px solid var(--line);border-radius:12px;padding:14px 8px;
+  text-align:center;cursor:pointer;font-weight:600;font-size:15px;background:#fff;display:flex;align-items:center;
+  justify-content:center;touch-action:manipulation;transition:.12s}
+.choice.selected{border-color:var(--gold);background:var(--gold-tint);color:var(--gold-dark)}
+.rating-block{margin-bottom:18px}
+.rating-block:last-child{margin-bottom:0}
+.rating-block .cat-name{font-weight:700;font-size:15.5px;margin-bottom:9px;color:var(--ink)}
+.rating-opts{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px}
+.rating-opt{border:1.5px solid var(--line);border-radius:11px;padding:12px 4px;text-align:center;font-size:12.5px;
+  font-weight:700;cursor:pointer;background:#fff;min-height:46px;display:flex;align-items:center;justify-content:center;
+  touch-action:manipulation;transition:.12s}
+.rating-opt[data-v="Poor"].selected{border-color:var(--red);background:var(--red-tint);color:var(--red)}
+.rating-opt[data-v="Average"].selected{border-color:var(--amber);background:var(--amber-tint);color:var(--amber)}
+.rating-opt[data-v="Excellent"].selected{border-color:var(--green);background:var(--green-tint);color:var(--green)}
+.section-title{font-size:16.5px;font-weight:700;margin:0 0 14px;color:var(--ink);line-height:1.35}
+.section-sub{font-size:13px;color:var(--ink-soft);margin:-8px 0 16px;line-height:1.5}
+.submit-bar{position:sticky;bottom:0;background:linear-gradient(to top,var(--paper) 55%,transparent);
+  padding:16px 0 calc(10px + env(safe-area-inset-bottom,0px))}
+.submit-bar .btn{width:100%;padding:17px;font-size:16.5px;border-radius:13px;box-shadow:0 6px 20px rgba(28,26,23,.18)}
+.thankyou{text-align:center;padding:64px 20px 40px}
+.thankyou .check{width:76px;height:76px;border-radius:50%;background:var(--green-tint);color:var(--green);
+  display:flex;align-items:center;justify-content:center;font-size:38px;margin:0 auto 22px}
+.thankyou h2{font-size:21px;line-height:1.4;margin:0 0 10px}
+.thankyou p{font-size:15px;line-height:1.5}
+.err{color:var(--red);font-size:13px;margin-top:7px;display:none;line-height:1.4}
+.unavailable{max-width:420px;margin:70px auto;text-align:center;padding:0 22px}
+.unavailable h2{font-size:19px;line-height:1.4}
+.unavailable p{font-size:14.5px;color:var(--ink-soft);line-height:1.55}
+fieldset{border:none;padding:0;margin:0}
+
+/* Extra breathing room fix for very narrow phones (older SE, small Android) */
+@media (max-width:360px){
+  .wrap{padding:0 12px}
+  .step-card{padding:16px 12px}
+  .hero{padding-left:16px;padding-right:16px}
+  .rating-opt{font-size:11.5px;padding:10px 2px}
+  .choice{min-width:100%}
+}
+</style>
+</head>
+<body>
+
+<!--
+============================================================================
+ SETUP (once): this page needs a Firebase project with Authentication
+ (Email/Password) and Firestore Database enabled — no Cloud Functions, no
+ Storage, no billing plan, no CLI. It talks to the SAME Firebase project as
+ your admin-dashboard.html file (paste the same config into both, and the
+ same Firestore Rules once in the Firebase Console — see the rules block
+ in admin-dashboard.html, or ask for it again any time).
+ Then: fill in FIREBASE CONFIG below, host this one file anywhere (Firebase
+
+ Hosting, Netlify, GitHub Pages, your own server) and point QR codes at it,
+ e.g. yoursite.com/feedback.html?location=al-borj
+============================================================================
+-->
+
+<div id="toastWrap" class="toast-wrap"></div>
+
+<div id="unavailableView" class="unavailable" style="display:none">
+  <h2>This feedback link is no longer available</h2>
+  <p>Please scan the current QR code at this location, or contact our team directly.</p>
+</div>
+
+<div id="formWrapView">
+  <div class="hero">
+    <div class="org" id="orgNamePublic">GUEST FEEDBACK SYSTEM</div>
+    <h1>We appreciate your feedback</h1>
+    <p>Please take a moment to share your comments by completing this short form.</p>
+  </div>
+  <div class="wrap">
+    <form id="feedbackForm">
+      <div class="step-card">
+        <div class="field">
+          <label class="required" for="pf-location">Where did you visit?</label>
+          <select id="pf-location" required><option value="">Choose a location…</option></select>
+          <div id="pf-lockedNote" class="hint" style="display:none">📍 Location selected via QR code — thanks for scanning!</div>
+        </div>
+        <div class="field"><label class="required" for="pf-date">Date of Visit</label><input type="date" id="pf-date" required></div>
+        <div class="field" style="margin-bottom:0"><label for="pf-server">Server's Name</label><input type="text" id="pf-server" maxlength="100" placeholder="If you remember it — totally optional"></div>
+      </div>
+
+      <div class="step-card">
+        <div class="field" style="margin-bottom:0">
+          <label class="required">Would you recommend us to your friends and family?</label>
+          <div class="choice-row" id="pf-recommendRow">
+            <div class="choice" data-v="Yes">👍 Yes</div><div class="choice" data-v="No">👎 No</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="step-card">
+        <div class="field">
+          <label class="required">How did you hear about us?</label>
+          <div class="choice-row" id="pf-heardRow">
+            <div class="choice" data-v="Friends" style="flex:1 1 45%">Friends</div>
+            <div class="choice" data-v="Newspaper & Magazines" style="flex:1 1 45%">Newspaper &amp; Magazines</div>
+            <div class="choice" data-v="Social Media" style="flex:1 1 45%">Social Media</div>
+            <div class="choice" data-v="Others" style="flex:1 1 45%">Others</div>
+          </div>
+        </div>
+        <div class="field" id="pf-heardOtherWrap" style="display:none;margin-bottom:0">
+          <label for="pf-heardOther">Please specify</label><input type="text" id="pf-heardOther" maxlength="150" placeholder="Tell us where">
+        </div>
+      </div>
+
+      <div class="step-card">
+        <div class="section-title" style="margin-bottom:4px">How was your experience?</div>
+        <p class="section-sub">A quick tap on each — Poor, Average, or Excellent.</p>
+        <fieldset id="pf-ratingsBlock"></fieldset>
+      </div>
+
+      <div class="step-card">
+        <div class="field"><label id="pf-likedBestLabel">What did you like best?</label><textarea id="pf-likedBest" maxlength="2000" placeholder="Tell us what stood out…"></textarea></div>
+        <div class="field" style="margin-bottom:0"><label>What could we do to make your experience even better?</label><textarea id="pf-improvementSuggestion" maxlength="2000" placeholder="We'd love to hear your suggestions…"></textarea></div>
+      </div>
+
+      <div class="step-card">
+        <div class="section-title" style="margin-bottom:4px">Stay in touch (optional)</div>
+        <p class="section-sub">Only fill this in if you'd like us to follow up with you.</p>
+        <div class="field"><label for="pf-guestName">Name</label><input type="text" id="pf-guestName" maxlength="150" placeholder="Your name"></div>
+        <div class="field"><label for="pf-contactNumber">Contact No.</label><input type="tel" id="pf-contactNumber" maxlength="30" placeholder="Phone number" inputmode="tel"></div>
+        <div class="field" style="margin-bottom:0">
+          <label for="pf-guestEmail">Email</label><input type="email" id="pf-guestEmail" maxlength="150" placeholder="you@example.com" inputmode="email">
+          <div class="err" id="pf-emailErr">Please double-check that email address.</div>
+        </div>
+      </div>
+
+      <div class="submit-bar"><button type="submit" class="btn btn-gold" id="pf-submitBtn">Submit Feedback</button></div>
+    </form>
+
+    <div id="pf-thankyouView" class="thankyou" style="display:none">
+      <div class="check">✓</div>
+      <h2>Thank you for your constructive feedback!</h2>
+      <p style="color:var(--ink-soft)">It genuinely helps us improve our service for you and every guest after you.</p>
+      <button class="btn btn-outline" id="pf-anotherBtn" style="margin-top:20px">Submit another feedback</button>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+// ============================================================================
+// FIREBASE CONFIG — same project/config as your admin-dashboard.html file.
+// ============================================================================
+const firebaseConfig = {
+  apiKey: "AIzaSyCqk1GufuU0smv4U_EHYaXQcl0eXzGhE5Y",
+  authDomain: "guest-feedback-f27fb.firebaseapp.com",
+  projectId: "guest-feedback-f27fb",
+  storageBucket: "guest-feedback-f27fb.firebasestorage.app",
+  messagingSenderId: "640014161549",
+  appId: "1:640014161549:web:1845a04aa2e8350692b4c4"
+};
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
+import * as Fs from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+
+const app = initializeApp(firebaseConfig);
+const db = Fs.getFirestore(app);
+
+function toast(msg, type = "") {
+  const wrap = document.getElementById("toastWrap");
+  const t = document.createElement("div");
+  t.className = "toast " + type; t.textContent = msg;
+  wrap.appendChild(t); setTimeout(() => t.remove(), 4500);
+}
+function catLabel(k) {
+  return { menuSelection:"Menu Selection", foodQuality:"Food Quality", service:"Service", atmosphere:"Atmosphere / Ambiance", valueForMoney:"Value for Money", overallExperience:"Overall Experience" }[k] || k;
+}
+const RATING_CATS = ["menuSelection","foodQuality","service","atmosphere","valueForMoney","overallExperience"];
+
+const ratingsBlock = document.getElementById("pf-ratingsBlock");
+RATING_CATS.forEach((key) => {
+  const div = document.createElement("div");
+  div.className = "rating-block";
+  div.innerHTML = `<div class="cat-name">${catLabel(key)}</div>
+    <div class="rating-opts" data-cat="${key}">
+      <div class="rating-opt" data-v="Poor">Poor</div>
+      <div class="rating-opt" data-v="Average">Average</div>
+      <div class="rating-opt" data-v="Excellent">Excellent</div>
+    </div>`;
+  ratingsBlock.appendChild(div);
+});
+document.querySelectorAll(".rating-opts").forEach((group) => {
+  group.addEventListener("click", (e) => {
+    const opt = e.target.closest(".rating-opt"); if (!opt) return;
+    group.querySelectorAll(".rating-opt").forEach((o) => o.classList.remove("selected"));
+    opt.classList.add("selected");
+  });
+});
+function wireChoiceRow(rowId) {
+  const row = document.getElementById(rowId);
+  row.addEventListener("click", (e) => {
+    const c = e.target.closest(".choice"); if (!c) return;
+    row.querySelectorAll(".choice").forEach((x) => x.classList.remove("selected"));
+    c.classList.add("selected");
+    if (rowId === "pf-heardRow") document.getElementById("pf-heardOtherWrap").style.display = c.dataset.v === "Others" ? "block" : "none";
+  });
+}
+wireChoiceRow("pf-recommendRow"); wireChoiceRow("pf-heardRow");
+function selectedChoice(rowId) { const el = document.querySelector(`#${rowId} .choice.selected`); return el ? el.dataset.v : null; }
+function selectedRatings() {
+  const out = {}; let complete = true;
+  document.querySelectorAll(".rating-opts").forEach((g) => { const s = g.querySelector(".rating-opt.selected"); out[g.dataset.cat] = s ? s.dataset.v : null; if (!s) complete = false; });
+  return { ratings: out, complete };
+}
+
+const dateInput = document.getElementById("pf-date");
+const todayStr = new Date().toISOString().slice(0, 10);
+dateInput.max = todayStr; dateInput.value = todayStr;
+
+const params = new URLSearchParams(location.search);
+const qLocationSlug = params.get("location");
+const locationSelect = document.getElementById("pf-location");
+let locationsData = []; let lockedLocation = false;
+
+async function loadLocations() {
+  const q = Fs.query(Fs.collection(db, "locations"), Fs.where("active", "==", true));
+  const snap = await Fs.getDocs(q);
+  locationsData = snap.docs.map((d) => ({ id: d.id, ...d.data() })).sort((a,b)=>(a.displayOrder??0)-(b.displayOrder??0));
+  locationsData.forEach((loc) => { const opt = document.createElement("option"); opt.value = loc.id; opt.textContent = loc.name; locationSelect.appendChild(opt); });
+  if (qLocationSlug) {
+    const match = locationsData.find((l) => l.slug === qLocationSlug || l.id === qLocationSlug);
+    if (!match) { document.getElementById("formWrapView").style.display = "none"; document.getElementById("unavailableView").style.display = "block"; return; }
+    locationSelect.value = match.id; locationSelect.disabled = true; lockedLocation = true;
+    document.getElementById("pf-lockedNote").style.display = "block";
+  }
+  updateLikedBestLabel();
+}
+function updateLikedBestLabel() {
+  const loc = locationsData.find((l) => l.id === locationSelect.value);
+  document.getElementById("pf-likedBestLabel").textContent = loc ? `What did you like best about ${loc.name}?` : "What did you like best?";
+}
+locationSelect.addEventListener("change", updateLikedBestLabel);
+loadLocations().catch((err) => { console.error(err); toast("Could not load locations. Please refresh.", "error"); });
+
+const emailInput = document.getElementById("pf-guestEmail");
+function validEmail(v) { return !v || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v); }
+
+// ---------------------------------------------------------------------------
+// Email notification (EmailJS) — best-effort, browser-side. Configure the
+// Service ID / Template ID / Public Key in admin.html → Settings, and add
+// each location's notification emails in admin.html → Locations → Edit.
+// If nothing is configured, this quietly does nothing (form still works).
+// ---------------------------------------------------------------------------
+let emailjsConfig = null;
+Fs.getDoc(Fs.doc(db, "settings", "general")).then((snap) => {
+  if (!snap.exists()) return;
+  const s = snap.data();
+  if (s.emailjsServiceId && s.emailjsTemplateId && s.emailjsPublicKey) {
+    emailjsConfig = { serviceId: s.emailjsServiceId, templateId: s.emailjsTemplateId, publicKey: s.emailjsPublicKey };
+    emailjs.init({ publicKey: emailjsConfig.publicKey });
+  }
+}).catch(() => {});
+
+async function sendNotificationEmails(loc, feedbackId, data) {
+  if (!emailjsConfig || !loc || !Array.isArray(loc.notifyEmails) || loc.notifyEmails.length === 0) return;
+  const templateParams = {
+    location_name: loc.name,
+    feedback_id: feedbackId,
+    date_of_visit: data.dateOfVisit,
+    server_name: data.serverName || "-",
+    recommendation: data.recommendation,
+    rating_menu: data.ratings.menuSelection,
+    rating_food: data.ratings.foodQuality,
+    rating_service: data.ratings.service,
+    rating_atmosphere: data.ratings.atmosphere,
+    rating_value: data.ratings.valueForMoney,
+    rating_overall: data.ratings.overallExperience,
+    liked_best: data.likedBest || "-",
+    improvement_suggestion: data.improvementSuggestion || "-",
+    guest_name: data.guestName || "-",
+    guest_contact: data.contactNumber || "-",
+    guest_email: data.guestEmail || "-",
+  };
+  for (const to_email of loc.notifyEmails) {
+    try { await emailjs.send(emailjsConfig.serviceId, emailjsConfig.templateId, { ...templateParams, to_email }); }
+    catch (err) { console.error("EmailJS send failed for", to_email, err); }
+  }
+}
+
+const form = document.getElementById("feedbackForm");
+const submitBtn = document.getElementById("pf-submitBtn");
+let submitting = false;
+const COOLDOWN_MS = 60 * 1000; // best-effort duplicate-submission guard (no backend to rate-limit server-side)
+
+form.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  if (submitting) return;
+  const lastSubmit = Number(localStorage.getItem("gfs_lastSubmit") || 0);
+  if (Date.now() - lastSubmit < COOLDOWN_MS) { toast("You just submitted feedback. Please wait a moment before submitting again.", "error"); return; }
+
+  if (!locationSelect.value) return toast("Please select a location.", "error");
+  const recommendation = selectedChoice("pf-recommendRow");
+  if (!recommendation) return toast("Please tell us if you'd recommend us.", "error");
+  const heardAboutUs = selectedChoice("pf-heardRow");
+  if (!heardAboutUs) return toast("Please tell us how you heard about us.", "error");
+  const heardAboutUsOther = document.getElementById("pf-heardOther").value.trim();
+  if (heardAboutUs === "Others" && !heardAboutUsOther) return toast("Please specify how you heard about us.", "error");
+  const { ratings, complete } = selectedRatings();
+  if (!complete) return toast("Please rate every category.", "error");
+  const emailVal = emailInput.value.trim();
+  document.getElementById("pf-emailErr").style.display = "none";
+  if (!validEmail(emailVal)) { document.getElementById("pf-emailErr").style.display = "block"; return toast("Please check the email address.", "error"); }
+
+  const loc = locationsData.find((l) => l.id === locationSelect.value);
+  submitting = true; submitBtn.disabled = true; submitBtn.innerHTML = `<span class="spinner"></span> Submitting…`;
+
+  const feedbackData = {
+    locationId: locationSelect.value, locationName: loc ? loc.name : "",
+    dateOfVisit: dateInput.value, serverName: document.getElementById("pf-server").value.trim(),
+    recommendation, heardAboutUs, heardAboutUsOther: heardAboutUs === "Others" ? heardAboutUsOther : "",
+    ratings,
+    likedBest: document.getElementById("pf-likedBest").value.trim(),
+    improvementSuggestion: document.getElementById("pf-improvementSuggestion").value.trim(),
+    guestName: document.getElementById("pf-guestName").value.trim(),
+    contactNumber: document.getElementById("pf-contactNumber").value.trim(),
+    guestEmail: emailVal,
+  };
+
+  try {
+    const year = new Date().getFullYear();
+    const counterRef = Fs.doc(db, "counters", `feedback-${year}`);
+    const feedbackId = await Fs.runTransaction(db, async (tx) => {
+      const snap = await tx.get(counterRef);
+      const next = snap.exists() ? snap.data().value + 1 : 1;
+      tx.set(counterRef, { value: next });
+      return `FB-${year}-${String(next).padStart(6, "0")}`;
+    });
+
+    await Fs.setDoc(Fs.doc(db, "feedback", feedbackId), {
+      feedbackId, ...feedbackData,
+      submittedAt: Fs.serverTimestamp(), updatedAt: Fs.serverTimestamp(),
+      status: "new", createdBy: "guest", deleted: false,
+    });
+
+    sendNotificationEmails(loc, feedbackId, feedbackData); // best-effort, doesn't block the thank-you screen
+
+    localStorage.setItem("gfs_lastSubmit", String(Date.now()));
+    document.getElementById("feedbackForm").style.display = "none";
+    document.getElementById("pf-thankyouView").style.display = "block";
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  } catch (err) {
+    console.error(err);
+    toast("We're sorry, but your feedback could not be submitted at this moment. Please try again.", "error");
+    submitting = false; submitBtn.disabled = false; submitBtn.textContent = "Submit Feedback";
+  }
+});
+
+document.getElementById("pf-anotherBtn").addEventListener("click", () => {
+  form.reset();
+  document.querySelectorAll(".choice.selected, .rating-opt.selected").forEach((el) => el.classList.remove("selected"));
+  document.getElementById("pf-heardOtherWrap").style.display = "none";
+  if (!lockedLocation) locationSelect.value = "";
+  dateInput.value = todayStr;
+  document.getElementById("pf-thankyouView").style.display = "none";
+  document.getElementById("feedbackForm").style.display = "block";
+  submitting = false; submitBtn.disabled = false; submitBtn.textContent = "Submit Feedback";
+  window.scrollTo({ top: 0, behavior: "smooth" });
+});
+
+Fs.getDoc(Fs.doc(db, "settings", "general")).then((snap) => {
+  if (snap.exists() && snap.data().organizationName) document.getElementById("orgNamePublic").textContent = snap.data().organizationName;
+}).catch(() => {});
+</script>
+</body>
+</html>
